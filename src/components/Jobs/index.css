@@ -1,6 +1,7 @@
 .left-container {
   display: flex;
   flex-direction: column;
+  position: sticky;
   width: 30%;
 }
 
@@ -53,4 +54,11 @@
   width: 300px;
   color: #ffffff;
   font-size: 28px;
+}
+
+.no-jobs-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }

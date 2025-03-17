@@ -5,6 +5,7 @@
   background-color: #202020;
   height: 10vh;
   padding: 20px;
+  position: sticky;
   width: 100%;
 }
 

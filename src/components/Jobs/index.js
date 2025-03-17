@@ -8,6 +8,7 @@ import Header from '../Header'
 import JobItem from '../JobItem'
 import TypeOfEmployment from '../TypeOfEmployment'
 import SalaryRange from '../SalaryRange'
+import Location from '../Location'
 import './index.css'
 
 const jobconstants = {
@@ -23,6 +24,7 @@ class Jobs extends Component {
     range: 0,
     joblist: [],
     searchInput: '',
+    locationNames: [],
     jobstatus: jobconstants.initial,
   }
 
@@ -31,7 +33,7 @@ class Jobs extends Component {
   }
 
   getJobsList = async () => {
-    const {range, employmentType, searchInput} = this.state
+    const {range, employmentType, searchInput, locationNames} = this.state
     this.setState({jobstatus: jobconstants.inProgress})
     const jwtToken = Cookies.get('jwt_token')
     const options = {
@@ -41,28 +43,32 @@ class Jobs extends Component {
       },
     }
 
-    const url = `https://apis.ccbp.in/jobs?employment_type=${employmentType.join()}&minimum_package=${range}&search=${searchInput}`
-    const response = await fetch(url, options)
+    try {
+      const url = `https://apis.ccbp.in/jobs?employment_type=${employmentType.join()}&minimum_package=${range}&search=${searchInput}&location=${locationNames.join()}`
+      const response = await fetch(url, options)
 
-    if (response.ok === true) {
-      const data = await response.json()
-      const updatedData = data.jobs.map(each => ({
-        id: each.id,
-        companyLogoUrl: each.company_logo_url,
-        employmentType: each.employment_type,
-        jobDescription: each.job_description,
-        location: each.location,
-        packagePerAnnum: each.package_per_annum,
-        rating: each.rating,
-        title: each.title,
-      }))
+      if (response.ok === true) {
+        const data = await response.json()
+        const updatedData = data.jobs.map(each => ({
+          id: each.id,
+          companyLogoUrl: each.company_logo_url,
+          employmentType: each.employment_type,
+          jobDescription: each.job_description,
+          location: each.location,
+          packagePerAnnum: each.package_per_annum,
+          rating: each.rating,
+          title: each.title,
+        }))
 
-      this.setState({
-        joblist: updatedData,
-        jobstatus: jobconstants.success,
-      })
-    } else {
-      this.setState({jobstatus: jobconstants.failure})
+        this.setState({
+          joblist: updatedData,
+          jobstatus: jobconstants.success,
+        })
+      } else {
+        this.setState({jobstatus: jobconstants.failure})
+      }
+    } catch (e) {
+      console.log(e)
     }
   }
 
@@ -79,9 +85,17 @@ class Jobs extends Component {
   onEmploymentType = type => {
     this.setState(
       prev => ({employmentType: [...prev.employmentType, type]}),
-      this.getJobDetails,
+      this.getJobsList,
     )
   }
+
+  onLocation = location => {
+    this.setState(
+      prev => ({locationNames: [...prev.locationNames, location]}),
+      this.getJobsList,
+    )
+  }
+
   onSalaryRange = salary => {
     this.setState({range: salary}, this.getJobsList)
   }
@@ -122,32 +136,38 @@ class Jobs extends Component {
             </div>
           </div>
         ) : (
-          <div className="success-container">
+          <>
             <Header />
-            {this.renderInitialCode()}
-            <div className="search-container">
-              <input
-                type="search"
-                value={searchInput}
-                className="search-element"
-                onChange={this.onSearch}
-                onKeyDown={this.enterKey}
-                placeholder="Search"
-              />
-              <button type="button" data-testid="searchButton">
-                <BsSearch className="search-icon" />
-              </button>
+            <div className="success-container">
+              {this.renderInitialCode()}
+              <div>
+                <div className="search-container">
+                  <input
+                    type="search"
+                    value={searchInput}
+                    className="search-element"
+                    onChange={this.onSearch}
+                    onKeyDown={this.enterKey}
+                    placeholder="Search"
+                  />
+                  <button type="button" data-testid="searchButton">
+                    <BsSearch className="search-icon" />
+                  </button>
+                </div>
+                <div className="no-jobs-container">
+                  <img
+                    src="https://assets.ccbp.in/frontend/react-js/no-jobs-img.png"
+                    alt="no jobs"
+                    className="no-jobs-image"
+                  />
+                  <h1 className="desc-heading">No Jobs Found</h1>
+                  <p className="location">
+                    We could not find any jobs. Try other filters
+                  </p>
+                </div>
+              </div>
             </div>
-            <img
-              src="https://assets.ccbp.in/frontend/react-js/no-jobs-img.png"
-              alt="no jobs"
-              className="no-jobs-image"
-            />
-            <h1 className="desc-heading">No Jobs Found</h1>
-            <p className="location">
-              We could not find any jobs. Try other filters
-            </p>
-          </div>
+          </>
         )}
       </div>
     )
@@ -156,46 +176,48 @@ class Jobs extends Component {
   renderJobFailure = () => {
     const {searchInput} = this.state
     return (
-      <div className="success-container">
+      <>
         <Header />
-        {this.renderInitialCode()}
-        <div className="list-container">
-          <div className="search-container">
-            <input
-              type="search"
-              value={searchInput}
-              className="search-element"
-              onChange={this.onSearch}
-              placeholder="Search"
-            />
-            <button
-              type="button"
-              data-testid="searchButton"
-              className="search-button"
-            >
-              <BsSearch className="search-icon" size={50} />
-            </button>
-          </div>
+        <div className="success-container">
+          {this.renderInitialCode()}
           <div>
-            <img
-              src="https://assets.ccbp.in/frontend/react-js/failure-img.png"
-              alt="failure view"
-              className="no-jobs-image"
-            />
-            <h1 className="desc-heading">Oops! Something Went Wrong</h1>
-            <p className="location">
-              We cannot seem to find the page you are looking for
-            </p>
-            <button
-              type="button"
-              className="retry-button"
-              onClick={this.getJobsList}
-            >
-              Retry
-            </button>
+            <div className="search-container">
+              <input
+                type="search"
+                value={searchInput}
+                className="search-element"
+                onChange={this.onSearch}
+                placeholder="Search"
+              />
+              <button
+                type="button"
+                data-testid="searchButton"
+                className="search-button"
+              >
+                <BsSearch className="search-icon" size={50} />
+              </button>
+            </div>
+            <div className="no-jobs-container">
+              <img
+                src="https://assets.ccbp.in/frontend/react-js/failure-img.png"
+                alt="failure view"
+                className="no-jobs-image"
+              />
+              <h1 className="desc-heading">Oops! Something Went Wrong</h1>
+              <p className="location">
+                We cannot seem to find the page you are looking for
+              </p>
+              <button
+                type="button"
+                className="retry-button"
+                onClick={this.getJobsList}
+              >
+                Retry
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -238,6 +260,8 @@ class Jobs extends Component {
       <TypeOfEmployment onEmploymentType={this.onEmploymentType} />
       <hr className="hr-line" />
       <SalaryRange onSalaryRange={this.onSalaryRange} />
+      <hr className="hr-line" />
+      <Location onLocation={this.onLocation} />
     </div>
   )
 
